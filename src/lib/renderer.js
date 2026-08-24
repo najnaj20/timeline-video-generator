@@ -470,7 +470,7 @@ export function drawFrame(canvas, journey, frame, text) {
     const liveKm = Math.round(currentDistance).toLocaleString(locale)
     context.fillStyle = dark ? '#93a0b5' : '#5c4b52'
     context.font = `${20 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`
-    context.fillText(`${liveKm} km · ${monthLabel}`, card.centerX, 108 * scale, card.width - 32 * scale)
+    context.fillText(`${monthLabel} · ${liveKm} km`, card.centerX, 108 * scale, card.width - 32 * scale)
   }
 
   context.textAlign = 'right'
