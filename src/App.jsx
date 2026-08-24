@@ -43,6 +43,7 @@ export default function App() {
   const [points, setPoints] = useState(null) // semua titik dari file (merged)
   const [fileName, setFileName] = useState('')
   const [fileCount, setFileCount] = useState(0)
+  const [fileDetail, setFileDetail] = useState([])
   const [parseError, setParseError] = useState('')
 
   // Rentang tanggal (multi-tahun)
@@ -76,6 +77,7 @@ export default function App() {
   const exportCanvasRef = useRef(null)
   const photoImgRef = useRef(null)
   const consentRef = useRef(null)
+  const blobRef = useRef(null)
   const abortRef = useRef(null)
   const rafRef = useRef(null)
   const playingRef = useRef(false)
@@ -135,32 +137,58 @@ export default function App() {
     setStatus('ready')
   }
 
+  const FILE_ERROR_HINTS = {
+    'legacy-format': 'Format Google Takeout lama. Export ulang dari HP: Setelan → Lokasi → Layanan lokasi → Timeline → Export data Timeline',
+    'raw-signals-only': 'Berisi raw signals tanpa data perjalanan. Export ulang dari HP.',
+    'unsupported-format': 'Bukan Timeline.json dari Google Maps (format tidak dikenali).',
+    'no-usable-locations': 'Tidak ada titik lokasi yang bisa dipakai.',
+    'malformed-json': 'File rusak / bukan JSON valid.',
+  }
+
+  const describeResults = (results) =>
+    results.map((r) =>
+      r.ok
+        ? `✓ ${r.name} — ${r.parsed.length.toLocaleString('id-ID')} titik`
+        : `✗ ${r.name} — ${FILE_ERROR_HINTS[r.reason] || r.message}`
+    )
+
   const handleFiles = async (files) => {
     if (!files || files.length === 0) return
     setError('')
-    const arrays = []
-    let failed = 0
+    const results = []
     for (const file of files) {
       try {
         const text = await file.text()
-        arrays.push(parseTimelineJson(JSON.parse(text)))
-      } catch {
-        failed += 1
+        const parsed = parseTimelineJson(JSON.parse(text))
+        results.push({ name: file.name, ok: true, parsed })
+      } catch (e) {
+        results.push({
+          name: file.name,
+          ok: false,
+          reason: e.reason || 'malformed-json',
+          message: e.message,
+        })
+        console.error('[TimelineVideoGen] gagal parse:', file.name, e)
       }
     }
-    if (arrays.length === 0) {
-      setParseError(`Tidak ada file yang bisa diparse (${failed} gagal).`)
+    const okResults = results.filter((r) => r.ok)
+    if (okResults.length === 0) {
+      setFileDetail(describeResults(results))
+      setParseError(`Tidak ada file yang bisa diparse (${results.length} file gagal).`)
       return
     }
-    const label = files.length === 1 ? files[0].name : `${files.length} file`
+    const arrays = okResults.map((r) => r.parsed)
+    const label = files.length === 1 ? files[0].name : `${files.length} file digabung`
+    setFileDetail(describeResults(results))
     applyLoadedPoints(mergePoints(arrays), label, files.length)
-    if (failed > 0) setParseError(`${failed} file dilewati (format tidak dikenali).`)
   }
 
   const loadSample = () => {
     setError('')
     try {
-      applyLoadedPoints(parseTimelineJson(sampleTimeline), 'sample-timeline.json', 1)
+      const parsed = parseTimelineJson(sampleTimeline)
+      setFileDetail([`✓ sample-timeline.json — ${parsed.length.toLocaleString('id-ID')} titik`])
+      applyLoadedPoints(parsed, 'sample-timeline.json', 1)
     } catch (e) {
       setParseError(`Sample gagal diparse: ${e.message}`)
     }
@@ -283,11 +311,14 @@ export default function App() {
         onProgress: (fraction) => setExportProgress(fraction),
         signal: controller.signal,
       })
+      blobRef.current = blob
       if (resultUrl) URL.revokeObjectURL(resultUrl)
       setResultUrl(URL.createObjectURL(blob))
       setStatus('done')
+      console.log('[TimelineVideoGen] MP4 export sukses:', (blob.size / 1024).toFixed(0), 'KB')
     } catch (e) {
       if (e.name === 'AbortError') return
+      console.error('[TimelineVideoGen] export gagal:', e)
       setError(e.message || 'Gagal membuat video.')
       setStatus('preview')
     }
@@ -380,6 +411,13 @@ export default function App() {
           <p className="status monog">
             ✓ {fileName} · {points.length.toLocaleString('id-ID')} titik lokasi · {months.length} bulan data
           </p>
+          {fileDetail.length > 0 && (
+            <ul className="file-detail monog">
+              {fileDetail.map((line, i) => (
+                <li key={i} className={line.startsWith('✗') ? 'file-detail-bad' : ''}>{line}</li>
+              ))}
+            </ul>
+          )}
 
           <div className="grid-2">
             <div className="field">
@@ -585,8 +623,12 @@ export default function App() {
                 </a>
                 <button
                   className="btn btn-ghost"
-                  onClick={() => {
-                    if (navigator.share) navigator.share({ title, files: [new File([resultUrl], 'journey.mp4', { type: 'video/mp4' })] })
+                  onClick={async () => {
+                    try {
+                      const blob = blobRef.current
+                      if (!blob || !navigator.canShare?.({ files: [new File([blob], 'journey.mp4', { type: 'video/mp4' })] })) return
+                      await navigator.share({ files: [new File([blob], 'timeline-journey.mp4', { type: 'video/mp4' })] })
+                    } catch {}
                   }}
                 >
                   📤 Share
