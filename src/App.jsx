@@ -368,7 +368,6 @@ export default function App() {
       {status === 'idle' && (
         <section className="card file-card">
           <h2>{t('fileTitle')}</h2>
-          <p className="dim">{t('multiFileNote')}</p>
           <div className="file-actions">
             <label className="btn btn-primary file-btn">
               {t('chooseFile')}
