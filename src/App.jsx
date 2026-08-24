@@ -404,9 +404,12 @@ export default function App() {
         <section className="card">
           <div className="card-head">
             <h2>2 · Atur perjalanan</h2>
-            <button className="btn btn-ghost btn-sm" onClick={() => { setStatus('idle'); setPoints(null); setJourney(null); setResultUrl('') }}>
-              ↺ Ganti file
-            </button>
+            <div className="card-head-right">
+              <span className="phase-badge monog" data-phase={status}>{status}</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => { setStatus('idle'); setPoints(null); setJourney(null); setResultUrl('') }}>
+                ↺ Ganti file
+              </button>
+            </div>
           </div>
           <p className="status monog">
             ✓ {fileName} · {points.length.toLocaleString('id-ID')} titik lokasi · {months.length} bulan data
@@ -569,7 +572,7 @@ export default function App() {
         </section>
       )}
 
-      {status === 'preview' && journey && (
+      {(status === 'preview' || status === 'exporting' || status === 'done') && journey && (
         <section className="card preview-card">
           <div className="card-head">
             <h2>3 · Preview & export</h2>
@@ -605,6 +608,7 @@ export default function App() {
               <div className="export-progress">
                 <progress value={exportProgress} max="1" />
                 <span className="monog">{Math.round(exportProgress * 100)}%</span>
+                <span className="monog dim">encode MP4…</span>
                 <button className="btn btn-ghost btn-sm" onClick={() => abortRef.current?.abort()}>Batal</button>
               </div>
             ) : (
