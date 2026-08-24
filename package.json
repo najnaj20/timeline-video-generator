@@ -1,0 +1,20 @@
+{
+  "name": "timeline-video-generator",
+  "version": "1.0.0",
+  "description": "Travel video generator dari Google Maps Timeline — multi-tahun, custom marker, dark map, route colors. Terinspirasi mahlernim/google-timeline-visualizer (MIT).",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "mediabunny": "1.55.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
+  }
+}
