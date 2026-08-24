@@ -208,6 +208,7 @@ export async function prepareJourney(
     stats: journeyStats(points),
     style,
   }
+  console.log('[TimelineVideoGen] prepareJourney:', { points: points.length, totalKm: journey.totalDistanceKm, days: journey.stats.days, years: journey.stats.yearMin + '–' + journey.stats.yearMax })
   const cameraTrack = buildCameraTrack(journey, size, cameraMovement)
   const overviewSegments = overviewRouteSegments(worldPoints)
   const endingOverview = overviewViewport({ ...journey, worldPoints: overviewSegments.flat() }, size)
@@ -342,8 +343,11 @@ function drawRecapCard(context, size, journey, text, progress, mapStyle) {
   context.fillText(text.periodLabel, size.width / 2, cardY + 90 * scale)
 
   const stats = journey.stats
+  const countedKm = Math.round(
+    journey.totalDistanceKm * easeOutCubic(progress),
+  ).toLocaleString('id-ID', { maximumFractionDigits: 0 })
   const rows = [
-    ['📏', 'Total jarak', `${journey.totalDistanceKm.toLocaleString('id-ID', { maximumFractionDigits: 0 })} km`],
+    ['📏', 'Total jarak', `${countedKm} km`],
     ['📅', 'Durasi', `${stats.days} hari`],
     ['🗓️', 'Rentang', stats.yearMin === stats.yearMax ? `${stats.yearMin}` : `${stats.yearMin} – ${stats.yearMax}`],
     ['📍', 'Titik lokasi', stats.pointCount.toLocaleString('id-ID')],
@@ -416,6 +420,24 @@ export function drawFrame(canvas, journey, frame, text) {
   const [headX, headY] = worldToCanvas(current.point, viewport, size)
   drawHeadMarker(context, headX, headY, scale, marker, route.main)
   context.restore()
+
+  // Odometer live: km berjalan nge-count selama perjalanan
+  if (frame.outroProgress <= 0) {
+    const odometerKm = journey.totalDistanceKm * Math.max(0, Math.min(1, frame.journeyProgress))
+    context.save()
+    context.font = `600 ${16 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`
+    const odometerText = `${Math.round(odometerKm).toLocaleString('id-ID')} km`
+    const oW = context.measureText(odometerText).width + 28 * scale
+    const oH = 30 * scale
+    context.fillStyle = dark ? 'rgba(13, 16, 23, 0.72)' : 'rgba(255, 255, 255, 0.82)'
+    context.beginPath()
+    context.roundRect(12 * scale, 12 * scale, oW, oH, 15 * scale)
+    context.fill()
+    context.fillStyle = route.main
+    context.textAlign = 'center'
+    context.fillText(odometerText, 12 * scale + oW / 2, 12 * scale + 20.5 * scale)
+    context.restore()
+  }
 
   if (frame.outroProgress > 0) {
     context.save()
