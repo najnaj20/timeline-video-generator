@@ -1,4 +1,7 @@
 {
   "installCommand": "npm install --registry=https://registry.npmjs.org",
-  "buildCommand": "npm run build"
+  "buildCommand": "npm run build",
+  "rewrites": [
+    { "source": "/((?!.*\\.(?:png|jpg|jpeg|gif|svg|ico|css|js|json|txt|xml|webmanifest|map)).*)", "destination": "/index.html" }
+  ]
 }

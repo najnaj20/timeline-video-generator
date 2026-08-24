@@ -647,6 +647,11 @@ export default function App() {
         <a className="btn btn-bmc foot-bmc" href={BMC_URL} target="_blank" rel="noopener noreferrer">
           {t('bmc')}
         </a>
+        <div className="foot-links monog">
+          <a href="/how-to/export-android" className="foot-link">📱 Export di Android</a>
+          <a href="/how-to/export-iphone" className="foot-link">🍎 Export di iPhone</a>
+          <a href="/how-to/create-video" className="foot-link">🎬 Cara bikin video</a>
+        </div>
         <span className="monog">{t('footerNote')}</span>
       </footer>
     </div>

@@ -75,6 +75,9 @@ button { font-family: inherit; }
 }
 .btn-bmc:hover { box-shadow: 0 6px 22px rgba(255, 92, 138, 0.4); border: none; }
 .foot-bmc { display: inline-block; margin-bottom: 8px; }
+.foot-links { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 8px; }
+.foot-link { color: var(--dim) !important; text-decoration: none; font-size: 12px; }
+.foot-link:hover { color: var(--gold) !important; }
 
 /* Hero */
 .hero { padding: 44px 0 36px; text-align: center; }
@@ -246,6 +249,76 @@ button { font-family: inherit; }
 
 .foot { margin-top: 50px; text-align: center; color: var(--dim); font-size: 11.5px; line-height: 1.7; }
 .foot a { color: var(--gold); }
+
+/* ===== How-to pages ===== */
+.howto-wrapper { max-width: 960px; margin: 0 auto; padding: 20px 20px 60px; }
+.logo-link { text-decoration: none; color: var(--text); }
+.howto-container { display: grid; grid-template-columns: 1fr 280px; gap: 40px; margin-top: 30px; }
+.howto-breadcrumb { grid-column: 1 / -1; font-size: 12px; color: var(--dim); }
+.howto-breadcrumb a { color: var(--gold); text-decoration: none; }
+.howto-title { font-size: clamp(26px, 4vw, 38px); font-weight: 700; letter-spacing: -0.4px; line-height: 1.2; margin-bottom: 14px; }
+.howto-intro { color: var(--dim); font-size: 15px; margin-bottom: 28px; line-height: 1.7; }
+
+.howto-steps { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px; }
+.step-card {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 20px;
+  backdrop-filter: blur(8px);
+}
+.step-number {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--gold), #ff9d2e);
+  color: #1a1402;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+}
+.step-icon { font-size: 26px; margin-top: 2px; }
+.step-body h3 { font-size: 16px; margin-bottom: 5px; }
+.step-body p { margin: 0; color: var(--dim); font-size: 13.5px; line-height: 1.65; }
+
+.howto-tips, .howto-faq { margin-top: 30px; }
+.howto-tips h2, .howto-faq h2 { font-size: 20px; margin-bottom: 14px; }
+.howto-tips ul { margin: 0; padding-left: 20px; color: var(--dim); font-size: 14px; display: flex; flex-direction: column; gap: 8px; }
+.faq-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 14px 18px;
+  margin-bottom: 10px;
+}
+.faq-item summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--text); }
+.faq-item p { color: var(--dim); font-size: 13.5px; margin: 10px 0 0; line-height: 1.65; }
+
+.cta-box {
+  margin-top: 34px;
+  border: 1px solid rgba(245, 197, 66, 0.3);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(245, 197, 66, 0.08), rgba(255, 92, 138, 0.06));
+  padding: 26px;
+  text-align: center;
+}
+.cta-box h2 { font-size: 22px; margin-bottom: 8px; }
+.cta-box p { color: var(--dim); font-size: 14px; margin: 0 auto 18px; max-width: 460px; }
+
+.howto-sidebar h3 { font-size: 13px; color: var(--dim); margin-bottom: 12px; letter-spacing: 0.5px; }
+.howto-sidebar-links { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.howto-sidebar-links a { color: var(--text); text-decoration: none; font-size: 13.5px; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: block; background: var(--surface); transition: border-color 0.15s; }
+.howto-sidebar-links a:hover { border-color: rgba(245, 197, 66, 0.5); }
+
+@media (max-width: 760px) {
+  .howto-container { grid-template-columns: 1fr; }
+  .howto-sidebar { order: -1; }
+}
 
 @media (max-width: 700px) {
   .grid-2, .grid-3 { grid-template-columns: 1fr; }
