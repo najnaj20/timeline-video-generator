@@ -63,6 +63,18 @@ button { font-family: inherit; }
 .logo-mark { margin-right: 6px; }
 .logo-accent { color: var(--gold); }
 .topbar-note { font-size: 11.5px; color: var(--dim); margin-left: auto; }
+.topbar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+.btn-bmc {
+  background: linear-gradient(135deg, #ff9d2e, #ff5c8a);
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(255, 92, 138, 0.25);
+}
+.btn-bmc:hover { box-shadow: 0 6px 22px rgba(255, 92, 138, 0.4); border: none; }
+.foot-bmc { display: inline-block; margin-bottom: 8px; }
 
 /* Hero */
 .hero { padding: 44px 0 36px; text-align: center; }
@@ -238,4 +250,5 @@ button { font-family: inherit; }
 @media (max-width: 700px) {
   .grid-2, .grid-3 { grid-template-columns: 1fr; }
   .topbar-note { display: none; }
+  .topbar-right { width: 100%; margin-left: 0; justify-content: flex-end; flex-wrap: wrap; }
 }

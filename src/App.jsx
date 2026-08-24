@@ -17,11 +17,12 @@ import {
   hasVideoEncoder,
 } from './lib/video'
 import sampleTimeline from './data/sample-timeline.json'
+import { detectLang, makeT, BMC_URL, LOCALES } from './i18n'
 import './index.css'
 
 const MARKER_EMOJI_PRESETS = ['📍', '🚗', '✈️', '🏍️', '🚢', '🚀', '🏖️', '⛰️', '🏙️', '🌋', '🎯', '❤️']
 
-function formatPeriod(points, locale = 'id-ID') {
+function formatPeriod(points, locale) {
   if (!points || points.length === 0) return ''
   const fmt = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' })
   const first = fmt.format(points[0].instant)
@@ -40,6 +41,14 @@ function mergePoints(arrays) {
 }
 
 export default function App() {
+  const [lang, setLang] = useState(detectLang)
+  const t = useMemo(() => makeT(lang), [lang])
+  const locale = LOCALES.find((l) => l.id === lang)?.intl || 'id-ID'
+
+  useEffect(() => {
+    document.documentElement.lang = lang === 'id' ? 'id' : 'en'
+  }, [lang])
+
   const [points, setPoints] = useState(null) // semua titik dari file (merged)
   const [fileName, setFileName] = useState('')
   const [fileCount, setFileCount] = useState(0)
@@ -65,7 +74,7 @@ export default function App() {
   const [markerPhotoData, setMarkerPhotoData] = useState('')
   const [recap, setRecap] = useState(true)
   const [videoSupport, setVideoSupport] = useState(null)
-  const [status, setStatus] = useState('idle') // idle | preparing | preview | exporting | done
+  const [status, setStatus] = useState('idle') // idle | ready | preparing | preview | exporting | done
   const [journey, setJourney] = useState(null)
   const [previewProgress, setPreviewProgress] = useState(0)
   const [playing, setPlaying] = useState(false)
@@ -102,8 +111,8 @@ export default function App() {
   }, [markerType, markerPhotoData])
 
   const months = useMemo(
-    () => (points ? availableMonths(points, 'id-ID') : []),
-    [points]
+    () => (points ? availableMonths(points, locale) : []),
+    [points, locale]
   )
 
   const filtered = useMemo(() => {
@@ -114,19 +123,19 @@ export default function App() {
     return startMonth && endMonth ? selectRange(points, startMonth, endMonth) : []
   }, [points, rangeMode, startMonth, endMonth, startDate, endDate])
 
-  const periodLabel = useMemo(() => formatPeriod(filtered), [filtered])
+  const periodLabel = useMemo(() => formatPeriod(filtered, locale), [filtered, locale])
   const format = VIDEO_FORMATS.find((f) => f.key === formatKey)
 
   const applyLoadedPoints = (merged, label, count) => {
     if (merged.length === 0) {
-      setParseError('File tidak mengandung titik lokasi yang bisa dipakai.')
+      setParseError(t('noPoints'))
       return
     }
     setPoints(merged)
     setFileName(label)
     setFileCount(count)
     setParseError('')
-    const m = availableMonths(merged, 'id-ID')
+    const m = availableMonths(merged, locale)
     setStartMonth(m[0]?.key || '')
     setEndMonth(m[m.length - 1]?.key || '')
     const first = merged[0].instant
@@ -137,19 +146,11 @@ export default function App() {
     setStatus('ready')
   }
 
-  const FILE_ERROR_HINTS = {
-    'legacy-format': 'Format Google Takeout lama. Export ulang dari HP: Setelan → Lokasi → Layanan lokasi → Timeline → Export data Timeline',
-    'raw-signals-only': 'Berisi raw signals tanpa data perjalanan. Export ulang dari HP.',
-    'unsupported-format': 'Bukan Timeline.json dari Google Maps (format tidak dikenali).',
-    'no-usable-locations': 'Tidak ada titik lokasi yang bisa dipakai.',
-    'malformed-json': 'File rusak / bukan JSON valid.',
-  }
-
   const describeResults = (results) =>
     results.map((r) =>
       r.ok
-        ? `✓ ${r.name} — ${r.parsed.length.toLocaleString('id-ID')} titik`
-        : `✗ ${r.name} — ${FILE_ERROR_HINTS[r.reason] || r.message}`
+        ? t('ok', { name: r.name, points: r.parsed.length.toLocaleString(locale) })
+        : `✗ ${r.name} — ${t(`errHint_${r.reason}`)}`
     )
 
   const handleFiles = async (files) => {
@@ -174,11 +175,11 @@ export default function App() {
     const okResults = results.filter((r) => r.ok)
     if (okResults.length === 0) {
       setFileDetail(describeResults(results))
-      setParseError(`Tidak ada file yang bisa diparse (${results.length} file gagal).`)
+      setParseError(t('parseFail', { count: results.length }))
       return
     }
     const arrays = okResults.map((r) => r.parsed)
-    const label = files.length === 1 ? files[0].name : `${files.length} file digabung`
+    const label = files.length === 1 ? files[0].name : t('loaded', { count: files.length, name: '' }).replace('✓ ', '').replace(/:\s*$/, '')
     setFileDetail(describeResults(results))
     applyLoadedPoints(mergePoints(arrays), label, files.length)
   }
@@ -187,10 +188,10 @@ export default function App() {
     setError('')
     try {
       const parsed = parseTimelineJson(sampleTimeline)
-      setFileDetail([`✓ sample-timeline.json — ${parsed.length.toLocaleString('id-ID')} titik`])
+      setFileDetail([t('ok', { name: 'sample-timeline.json', points: parsed.length.toLocaleString(locale) })])
       applyLoadedPoints(parsed, 'sample-timeline.json', 1)
     } catch (e) {
-      setParseError(`Sample gagal diparse: ${e.message}`)
+      setParseError(t('sampleFail', { msg: e.message }))
     }
   }
 
@@ -243,11 +244,11 @@ export default function App() {
   const runPreview = async () => {
     setError('')
     if (filtered.length < 2) {
-      setError('Pilih rentang yang berisi minimal 2 titik lokasi.')
+      setError(t('errTooFew'))
       return
     }
     if (!consentRef.current?.checked) {
-      setError('Centang persetujuan peta dulu — tile peta dimuat dari CARTO (OpenStreetMap).')
+      setError(t('errConsent'))
       return
     }
     abortRef.current?.abort()
@@ -275,7 +276,8 @@ export default function App() {
       setPlaying(true)
     } catch (e) {
       if (e.name === 'AbortError') return
-      setError(e.message || 'Gagal menyiapkan perjalanan.')
+      console.error('[TimelineVideoGen] preview gagal:', e)
+      setError(`${t('errPrepare')} ${e.message || ''}`)
       setStatus('ready')
     }
   }
@@ -285,7 +287,7 @@ export default function App() {
     setError('')
     const resolved = resolveVideoFormat(formatKey, videoSupport)
     if (!resolved) {
-      setError('Browser tidak mendukung encoding H.264 untuk format ini. Coba format lebih kecil atau Safari/Chrome terbaru.')
+      setError(t('errNoFormat'))
       return
     }
     if (!exportCanvasRef.current) exportCanvasRef.current = document.createElement('canvas')
@@ -319,7 +321,7 @@ export default function App() {
     } catch (e) {
       if (e.name === 'AbortError') return
       console.error('[TimelineVideoGen] export gagal:', e)
-      setError(e.message || 'Gagal membuat video.')
+      setError(`${t('errExport')} ${e.message || ''}`)
       setStatus('preview')
     }
   }
@@ -332,16 +334,8 @@ export default function App() {
       )
     : { width: 480, height: 480 }
 
-  const formatLabel = (key) => {
-    const map = {
-      standard: 'Kotak · 480p',
-      high: 'Kotak · 720p',
-      ultra: 'Kotak · 1080p',
-      portrait: 'Portrait · 1080×1920',
-      landscape: 'Landscape · 1920×1080',
-    }
-    return map[key] || key
-  }
+  const formatLabel = (key) =>
+    t({ standard: 'fmtStandard', high: 'fmtHigh', ultra: 'fmtUltra', portrait: 'fmtPortrait', landscape: 'fmtLandscape' }[key])
 
   return (
     <div className="app">
@@ -349,29 +343,35 @@ export default function App() {
         <div className="logo monog">
           <span className="logo-mark">🎬</span> timeline<span className="logo-accent">.video</span>
         </div>
-        <div className="topbar-note monog">ubah Timeline Google Maps jadi video perjalanan · 100% di perangkatmu</div>
+        <div className="topbar-note monog">{t('tagline')}</div>
+        <div className="topbar-right">
+          <a className="btn btn-bmc" href={BMC_URL} target="_blank" rel="noopener noreferrer">
+            {t('bmc')}
+          </a>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => setLang((l) => (l === 'id' ? 'en' : 'id'))}
+            title={lang === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'}
+          >
+            {t('langToggle')}
+          </button>
+        </div>
       </nav>
 
       <header className="hero">
         <h1 className="hero-title">
           Timeline <span className="grad-text">Video Generator</span>
         </h1>
-        <p className="hero-sub">
-          Upload <span className="monog">Timeline.json</span> dari Google Maps — pilih rentang
-          multi-tahun, atur marker 🎯 warna rute 🎨 map dark 🌑, dan export MP4 siap post.
-          File tidak pernah di-upload ke server.
-        </p>
+        <p className="hero-sub">{t('heroSub')}</p>
       </header>
 
       {status === 'idle' && (
         <section className="card file-card">
-          <h2>1 · Pilih file Timeline</h2>
-          <p className="dim">
-            Bisa pilih <b>beberapa file sekaligus</b> (dari beberapa akun Google) — nanti digabung otomatis.
-          </p>
+          <h2>{t('fileTitle')}</h2>
+          <p className="dim">{t('multiFileNote')}</p>
           <div className="file-actions">
             <label className="btn btn-primary file-btn">
-              📁 Pilih Timeline.json
+              {t('chooseFile')}
               <input
                 type="file"
                 accept="application/json,.json"
@@ -383,18 +383,20 @@ export default function App() {
               />
             </label>
             <button className="btn btn-ghost" onClick={loadSample}>
-              ✨ Coba sample perjalanan
+              {t('sample')}
             </button>
           </div>
-          <p className="status monog">{fileName ? `✓ ${fileCount} file dimuat: ${fileName}` : 'Belum ada file dimuat'}</p>
+          <p className="status monog">
+            {fileName ? t('loaded', { count: fileCount, name: fileName }) : t('noFile')}
+          </p>
           {parseError && <p className="error">{parseError}</p>}
           <details className="help-panel">
-            <summary className="monog">Cara export Timeline dari Google Maps</summary>
+            <summary className="monog">{t('helpSummary')}</summary>
             <ol>
-              <li>Buka Google Maps → tap foto profil.</li>
-              <li>Setelan → Konten pribadi.</li>
-              <li>Export data Timeline → simpan <span className="monog">Timeline.json</span>.</li>
-              <li>Balik ke sini, pilih file-nya.</li>
+              <li>{t('helpStep1')}</li>
+              <li>{t('helpStep2')}</li>
+              <li>{t('helpStep3')}</li>
+              <li>{t('helpStep4')}</li>
             </ol>
           </details>
         </section>
@@ -403,16 +405,16 @@ export default function App() {
       {status !== 'idle' && (
         <section className="card">
           <div className="card-head">
-            <h2>2 · Atur perjalanan</h2>
+            <h2>{t('settingsTitle')}</h2>
             <div className="card-head-right">
               <span className="phase-badge monog" data-phase={status}>{status}</span>
               <button className="btn btn-ghost btn-sm" onClick={() => { setStatus('idle'); setPoints(null); setJourney(null); setResultUrl('') }}>
-                ↺ Ganti file
+                {t('changeFile')}
               </button>
             </div>
           </div>
           <p className="status monog">
-            ✓ {fileName} · {points.length.toLocaleString('id-ID')} titik lokasi · {months.length} bulan data
+            {t('loadedSummary', { name: fileName, points: points.length.toLocaleString(locale), months: months.length })}
           </p>
           {fileDetail.length > 0 && (
             <ul className="file-detail monog">
@@ -424,18 +426,18 @@ export default function App() {
 
           <div className="grid-2">
             <div className="field">
-              <label className="monog">Rentang tanggal (multi-tahun)</label>
+              <label className="monog">{t('rangeLabel')}</label>
               <label className="checkbox-row">
                 <input type="checkbox" checked={rangeMode === 'exact'} onChange={(e) => setRangeMode(e.target.checked ? 'exact' : 'month')} />
-                <span>Pilih tanggal spesifik</span>
+                <span>{t('exactDates')}</span>
               </label>
               {rangeMode === 'month' ? (
                 <div className="field-row">
-                  <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)} aria-label="Dari bulan">
+                  <select value={startMonth} onChange={(e) => setStartMonth(e.target.value)} aria-label={t('fromMonth')}>
                     {months.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
                   </select>
                   <span className="dim">–</span>
-                  <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)} aria-label="Sampai bulan">
+                  <select value={endMonth} onChange={(e) => setEndMonth(e.target.value)} aria-label={t('toMonth')}>
                     {months.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
                   </select>
                 </div>
@@ -446,32 +448,34 @@ export default function App() {
                   <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
                 </div>
               )}
-              <span className="field-hint monog">{periodLabel} · {filtered.length.toLocaleString('id-ID')} titik dipilih</span>
+              <span className="field-hint monog">
+                {t('selectedSummary', { period: periodLabel, points: filtered.length.toLocaleString(locale) })}
+              </span>
             </div>
 
             <div className="field">
-              <label className="monog">Judul video</label>
+              <label className="monog">{t('videoTitle')}</label>
               <input type="text" value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} placeholder="My Journey" />
             </div>
           </div>
 
           <div className="grid-3">
             <div className="field">
-              <label className="monog">Durasi</label>
+              <label className="monog">{t('duration')}</label>
               <select value={duration} onChange={(e) => setDuration(e.target.value)}>
-                {['10', '15', '20', '30', '45', '60'].map((d) => <option key={d} value={d}>{d} detik</option>)}
+                {['10', '15', '20', '30', '45', '60'].map((d) => <option key={d} value={d}>{t('seconds', { n: d })}</option>)}
               </select>
             </div>
             <div className="field">
-              <label className="monog">Gerakan kamera</label>
+              <label className="monog">{t('camera')}</label>
               <select value={camera} onChange={(e) => setCamera(e.target.value)}>
-                <option value="fixed">Fixed zoom</option>
-                <option value="steady">Steady following</option>
-                <option value="dynamic">Dynamic following</option>
+                <option value="fixed">{t('cameraFixed')}</option>
+                <option value="steady">{t('cameraSteady')}</option>
+                <option value="dynamic">{t('cameraDynamic')}</option>
               </select>
             </div>
             <div className="field">
-              <label className="monog">Format video</label>
+              <label className="monog">{t('format')}</label>
               <select value={formatKey} onChange={(e) => setFormatKey(e.target.value)}>
                 {VIDEO_FORMATS.map((f) => <option key={f.key} value={f.key}>{formatLabel(f.key)}</option>)}
               </select>
@@ -480,7 +484,7 @@ export default function App() {
 
           <div className="grid-3">
             <div className="field">
-              <label className="monog">Map style</label>
+              <label className="monog">{t('mapStyle')}</label>
               <div className="pill-group">
                 {MAP_STYLES.map((s) => (
                   <button key={s.id} className={`pill ${mapStyle === s.id ? 'active' : ''}`} onClick={() => setMapStyle(s.id)}>
@@ -490,7 +494,7 @@ export default function App() {
               </div>
             </div>
             <div className="field">
-              <label className="monog">Warna rute</label>
+              <label className="monog">{t('routeColor')}</label>
               <div className="swatch-row">
                 {Object.entries(ROUTE_COLORS).map(([key, c]) => (
                   <button
@@ -504,7 +508,7 @@ export default function App() {
               </div>
             </div>
             <div className="field">
-              <label className="monog">Marker</label>
+              <label className="monog">{t('marker')}</label>
               <div className="pill-group">
                 {MARKER_TYPES.map((m) => (
                   <button key={m.id} className={`pill ${markerType === m.id ? 'active' : ''}`} onClick={() => setMarkerType(m.id)}>
@@ -517,7 +521,7 @@ export default function App() {
 
           {markerType === 'emoji' && (
             <div className="field">
-              <label className="monog">Pilih emoji marker</label>
+              <label className="monog">{t('emojiMarker')}</label>
               <div className="emoji-row">
                 {MARKER_EMOJI_PRESETS.map((e) => (
                   <button key={e} className={`emoji-cell ${markerEmoji === e ? 'active' : ''}`} onClick={() => setMarkerEmoji(e)}>
@@ -531,9 +535,9 @@ export default function App() {
 
           {markerType === 'photo' && (
             <div className="field">
-              <label className="monog">Foto marker (otomatis di-crop lingkaran)</label>
+              <label className="monog">{t('photoMarker')}</label>
               <label className="btn btn-ghost btn-sm file-btn">
-                🖼️ Pilih foto
+                {t('choosePhoto')}
                 <input
                   type="file"
                   accept="image/*"
@@ -556,17 +560,14 @@ export default function App() {
 
           <label className="checkbox-row consent">
             <input ref={consentRef} type="checkbox" defaultChecked={false} />
-            <span>
-              Saya paham: file Timeline tidak di-upload, tapi <b>tile peta dimuat dari CARTO</b> (OpenStreetMap)
-              untuk area rute — ini bisa mengungkap lokasi perjalanan ke penyedia tile.
-            </span>
+            <span>{t('consent')}</span>
           </label>
 
           {error && <p className="error">{error}</p>}
 
           <div className="actions">
             <button className="btn btn-primary btn-big" onClick={runPreview} disabled={status === 'preparing'}>
-              {status === 'preparing' ? '⏳ Menyiapkan…' : '▶️ Preview'}
+              {status === 'preparing' ? t('preparing') : t('previewBtn')}
             </button>
           </div>
         </section>
@@ -575,8 +576,8 @@ export default function App() {
       {(status === 'preview' || status === 'exporting' || status === 'done') && journey && (
         <section className="card preview-card">
           <div className="card-head">
-            <h2>3 · Preview & export</h2>
-            {!hasVideoEncoder() && <span className="warn">⚠️ Browser ini tidak bisa encode video (butuh Safari 16.4+ / Chrome)</span>}
+            <h2>{t('previewTitle')}</h2>
+            {!hasVideoEncoder() && <span className="warn">{t('compatWarn')}</span>}
           </div>
 
           <canvas
@@ -588,7 +589,7 @@ export default function App() {
 
           <div className="preview-controls">
             <button className="btn btn-ghost btn-sm" onClick={() => setPlaying((p) => !p)}>
-              {playing ? '⏸ Pause' : '▶️ Play'}
+              {playing ? t('pause') : t('play')}
             </button>
             <input
               type="range"
@@ -608,12 +609,12 @@ export default function App() {
               <div className="export-progress">
                 <progress value={exportProgress} max="1" />
                 <span className="monog">{Math.round(exportProgress * 100)}%</span>
-                <span className="monog dim">encode MP4…</span>
-                <button className="btn btn-ghost btn-sm" onClick={() => abortRef.current?.abort()}>Batal</button>
+                <span className="monog dim">{t('encoding')}</span>
+                <button className="btn btn-ghost btn-sm" onClick={() => abortRef.current?.abort()}>{t('cancel')}</button>
               </div>
             ) : (
               <button className="btn btn-primary btn-big" onClick={exportVideo} disabled={!videoSupport?.get(formatKey)}>
-                🎬 Buat MP4 ({formatLabel(formatKey)})
+                {t('exportBtn', { format: formatLabel(formatKey) })}
               </button>
             )}
           </div>
@@ -623,7 +624,7 @@ export default function App() {
               <video src={resultUrl} controls playsInline className="result-video" />
               <div className="result-actions">
                 <a className="btn btn-primary" href={resultUrl} download={`timeline-journey-${Date.now()}.mp4`}>
-                  ⬇️ Download MP4
+                  {t('download')}
                 </a>
                 <button
                   className="btn btn-ghost"
@@ -635,7 +636,7 @@ export default function App() {
                     } catch {}
                   }}
                 >
-                  📤 Share
+                  {t('share')}
                 </button>
               </div>
             </div>
@@ -644,10 +645,10 @@ export default function App() {
       )}
 
       <footer className="foot">
-        <span className="monog">
-          Data diproses 100% di perangkatmu · Map © OpenStreetMap contributors & CARTO · terinspirasi{' '}
-          <a href="https://github.com/mahlernim/google-timeline-visualizer" target="_blank" rel="noreferrer">mahlernim/google-timeline-visualizer</a> (MIT)
-        </span>
+        <a className="btn btn-bmc foot-bmc" href={BMC_URL} target="_blank" rel="noopener noreferrer">
+          {t('bmc')}
+        </a>
+        <span className="monog">{t('footerNote')}</span>
       </footer>
     </div>
   )
