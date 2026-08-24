@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from '
 import { useEffect } from 'react'
 import App from './App'
 import HowToPage from './pages/HowToPage'
+import { LangProvider } from './lang-context'
 import './index.css'
 
 function ScrollToTop() {
@@ -21,13 +22,15 @@ function HowToPageWrapper() {
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/how-to/:slug" element={<HowToPageWrapper />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <LangProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/how-to/:slug" element={<HowToPageWrapper />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </LangProvider>
   </React.StrictMode>
 )

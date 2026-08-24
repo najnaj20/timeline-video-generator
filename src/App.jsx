@@ -17,7 +17,8 @@ import {
   hasVideoEncoder,
 } from './lib/video'
 import sampleTimeline from './data/sample-timeline.json'
-import { detectLang, makeT, BMC_URL, LOCALES } from './i18n'
+import { BMC_URL } from './i18n'
+import { useLang } from './lang-context'
 import './index.css'
 
 const MARKER_EMOJI_PRESETS = ['📍', '🚗', '✈️', '🏍️', '🚢', '🚀', '🏖️', '⛰️', '🏙️', '🌋', '🎯', '❤️']
@@ -41,13 +42,7 @@ function mergePoints(arrays) {
 }
 
 export default function App() {
-  const [lang, setLang] = useState(detectLang)
-  const t = useMemo(() => makeT(lang), [lang])
-  const locale = LOCALES.find((l) => l.id === lang)?.intl || 'id-ID'
-
-  useEffect(() => {
-    document.documentElement.lang = lang === 'id' ? 'id' : 'en'
-  }, [lang])
+  const { lang, setLang, t, locale } = useLang()
 
   const [points, setPoints] = useState(null) // semua titik dari file (merged)
   const [fileName, setFileName] = useState('')

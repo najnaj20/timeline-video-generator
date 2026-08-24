@@ -67,6 +67,20 @@ export const STRINGS = {
     bmc: '☕ Buy me a coffee',
     footerNote:
       'Data diproses 100% di perangkatmu · Map © OpenStreetMap contributors & CARTO',
+    // Halaman how-to
+    howtoNav: 'panduan cara pakai',
+    howtoHome: 'Beranda',
+    howtoTips: '💡 Tips',
+    howtoFaq: '❓ Tanya Jawab',
+    howtoSidebar: '📖 Panduan Lainnya',
+    howtoBack: '⬅️ Kembali ke aplikasi',
+    howtoSupport: '☕ Dukung proyek ini',
+    howtoCtaTitle: 'Siap mencoba? 🚀',
+    howtoCtaText:
+      'Upload Timeline.json kamu dan buat video perjalanan dalam hitungan menit — gratis, 100% on-device.',
+    howtoCtaBtn: 'Buka Timeline Video Generator →',
+    howtoNotFound: 'Halaman tidak ditemukan',
+    openApp: '🚀 Buka Aplikasi',
     errConsent:
       'Centang persetujuan peta dulu — tile peta dimuat dari CARTO (OpenStreetMap).',
     errTooFew: 'Pilih rentang yang berisi minimal 2 titik lokasi.',
@@ -145,6 +159,20 @@ export const STRINGS = {
     bmc: '☕ Buy me a coffee',
     footerNote:
       'All processing happens on your device · Map © OpenStreetMap contributors & CARTO',
+    // How-to pages
+    howtoNav: 'how-to guides',
+    howtoHome: 'Home',
+    howtoTips: '💡 Tips',
+    howtoFaq: '❓ FAQ',
+    howtoSidebar: '📖 Other Guides',
+    howtoBack: '⬅️ Back to app',
+    howtoSupport: '☕ Support this project',
+    howtoCtaTitle: 'Ready to try it? 🚀',
+    howtoCtaText:
+      'Upload your Timeline.json and create a travel video in minutes — free, 100% on-device.',
+    howtoCtaBtn: 'Open Timeline Video Generator →',
+    howtoNotFound: 'Page not found',
+    openApp: '🚀 Open App',
     errConsent:
       'Please check the map consent first — map tiles are fetched from CARTO (OpenStreetMap).',
     errTooFew: 'Pick a range that contains at least 2 location points.',
