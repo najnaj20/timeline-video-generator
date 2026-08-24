@@ -181,4 +181,4 @@ export function makeT(lang) {
 }
 
 // Link pembayaran / support — Lynk.id
-export const BMC_URL = 'https://lynk.id/najwa'
+export const BMC_URL = 'https://lynk.id/najnaj/s/58x34o6w454x'
