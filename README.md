@@ -2,6 +2,8 @@
 
 Ubah file **Timeline.json** dari Google Maps menjadi **video perjalanan MP4** — sepenuhnya di browser kamu, tanpa upload ke server.
 
+**🔗 Live demo: https://timeline-video-generator.vercel.app/**
+
 Terinspirasi dari [mahlernim/google-timeline-visualizer](https://github.com/mahlernim/google-timeline-visualizer) (MIT). Modul inti (parsing Timeline, geo, camera) diadaptasi dari repo tersebut; fitur premium (custom marker, dark map, route colors, recap card) ditambahkan di sini.
 
 ## ✨ Fitur
