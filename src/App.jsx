@@ -202,7 +202,7 @@ export default function App() {
     if (!canvas || !journey) return
     const total = Number(duration)
     const frame = frameAtOverallProgress(progressRef.current, total)
-    drawFrame(canvas, journey, frame, { title: title || 'My Journey', periodLabel })
+    drawFrame(canvas, journey, frame, { title: title || 'My Journey', periodLabel, locale })
     if (playingRef.current) {
       progressRef.current += 1 / (total * 60) // ~60fps
       if (progressRef.current >= 1) progressRef.current = 0
@@ -221,7 +221,7 @@ export default function App() {
       const canvas = canvasRef.current
       if (canvas) {
         const frame = frameAtOverallProgress(progressRef.current, Number(duration))
-        drawFrame(canvas, journey, frame, { title: title || 'My Journey', periodLabel })
+        drawFrame(canvas, journey, frame, { title: title || 'My Journey', periodLabel, locale })
       }
     }
     return stopAnimation
@@ -232,7 +232,7 @@ export default function App() {
     setPreviewProgress(progressRef.current)
     if (canvasRef.current && journey) {
       const frame = frameAtOverallProgress(progressRef.current, Number(duration))
-      drawFrame(canvasRef.current, journey, frame, { title: title || 'My Journey', periodLabel })
+      drawFrame(canvasRef.current, journey, frame, { title: title || 'My Journey', periodLabel, locale })
     }
   }
 
@@ -303,7 +303,7 @@ export default function App() {
       const style = { mapStyle, routeColor, marker, recap }
       const blob = await createJourneyMp4(canvas, { ...journey, style }, {
         durationSeconds: Number(duration),
-        overlay: { title: title || 'My Journey', periodLabel },
+        overlay: { title: title || 'My Journey', periodLabel, locale },
         format: resolved,
         onProgress: (fraction) => setExportProgress(fraction),
         signal: controller.signal,

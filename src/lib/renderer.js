@@ -421,24 +421,6 @@ export function drawFrame(canvas, journey, frame, text) {
   drawHeadMarker(context, headX, headY, scale, marker, route.main)
   context.restore()
 
-  // Odometer live: km berjalan nge-count selama perjalanan
-  if (frame.outroProgress <= 0) {
-    const odometerKm = journey.totalDistanceKm * Math.max(0, Math.min(1, frame.journeyProgress))
-    context.save()
-    context.font = `600 ${16 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`
-    const odometerText = `${Math.round(odometerKm).toLocaleString('id-ID')} km`
-    const oW = context.measureText(odometerText).width + 28 * scale
-    const oH = 30 * scale
-    context.fillStyle = dark ? 'rgba(13, 16, 23, 0.72)' : 'rgba(255, 255, 255, 0.82)'
-    context.beginPath()
-    context.roundRect(12 * scale, 12 * scale, oW, oH, 15 * scale)
-    context.fill()
-    context.fillStyle = route.main
-    context.textAlign = 'center'
-    context.fillText(odometerText, 12 * scale + oW / 2, 12 * scale + 20.5 * scale)
-    context.restore()
-  }
-
   if (frame.outroProgress > 0) {
     context.save()
     context.globalAlpha = (190 / 255) * easeInOutCubic(frame.outroProgress)
@@ -462,6 +444,20 @@ export function drawFrame(canvas, journey, frame, text) {
   context.fillStyle = dark ? '#93a0b5' : '#5c4b52'
   context.font = `${20 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`
   context.fillText(text.periodLabel, card.centerX, 108 * scale)
+
+  // Odometer live: km & bulan nge-count di bawah judul
+  if (frame.outroProgress <= 0 && journey.points.length >= 1) {
+    const locale = text.locale || 'id-ID'
+    const t0 = journey.points[0].instant.getTime()
+    const t1 = journey.points[journey.points.length - 1].instant.getTime()
+    const instant = new Date(t0 + (t1 - t0) * Math.max(0, Math.min(1, frame.journeyProgress)))
+    const monthLabel = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(instant)
+    const liveKm = Math.round(currentDistance).toLocaleString(locale)
+    const liveText = `${liveKm} km · ${monthLabel}`
+    context.fillStyle = route.main
+    context.font = `700 ${19 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`
+    context.fillText(liveText, card.centerX, 140 * scale, card.width - 32 * scale)
+  }
 
   context.textAlign = 'right'
   context.fillStyle = dark ? 'rgba(232, 236, 244, 0.55)' : 'rgba(36, 25, 29, 0.78)'
