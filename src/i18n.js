@@ -15,8 +15,6 @@ export const STRINGS = {
     heroSub:
       'Upload Timeline.json dari Google Maps — pilih rentang multi-tahun, atur marker 🎯 warna rute 🎨 map dark 🌑, dan export MP4 siap post. File tidak pernah di-upload ke server.',
     fileTitle: '1 · Pilih file Timeline',
-    multiFileNote:
-      'Bisa pilih beberapa file sekaligus (dari beberapa akun Google) — nanti digabung otomatis.',
     chooseFile: '📁 Pilih Timeline.json',
     sample: '✨ Coba sample perjalanan',
     noFile: 'Belum ada file dimuat',
@@ -95,8 +93,6 @@ export const STRINGS = {
     heroSub:
       'Upload Timeline.json from Google Maps — pick a multi-year range, set your marker 🎯 route color 🎨 dark map 🌑, and export a post-ready MP4. Your file is never uploaded to a server.',
     fileTitle: '1 · Choose Timeline file',
-    multiFileNote:
-      'You can pick several files at once (from multiple Google accounts) — they are merged automatically.',
     chooseFile: '📁 Choose Timeline.json',
     sample: '✨ Try a sample journey',
     noFile: 'No file loaded',
