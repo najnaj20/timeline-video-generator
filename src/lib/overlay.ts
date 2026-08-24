@@ -1,7 +1,7 @@
 import type { RenderSize } from './types';
 
 export const OVERLAY_DESIGN_EDGE = 720;
-export const OVERLAY_BOTTOM = 168;
+export const OVERLAY_BOTTOM = 132;
 export const CARD_TOP = 28;
 export const CARD_SIDE_INSET = 34;
 export const MAX_CARD_WIDTH = OVERLAY_DESIGN_EDGE - CARD_SIDE_INSET * 2;

@@ -245,6 +245,24 @@ function pointAtProgress(journey, progress) {
   return { point: position.point, completedIndex: position.fromIndex }
 }
 
+// Waktu (instant) aktual dari data pada posisi odometer — interpolasi antar 2 point sesuai jarak
+function pointInstantAtProgress(journey, progress) {
+  const distances = journey.cumulativeDistanceKm
+  const points = journey.points
+  if (!points || points.length === 0 || distances.length === 0) return null
+  const currentDistance = journey.totalDistanceKm * Math.max(0, Math.min(1, progress))
+  if (currentDistance <= 0) return points[0].instant
+  if (currentDistance >= journey.totalDistanceKm) return points[points.length - 1].instant
+  let i = 0
+  while (i < distances.length - 2 && distances[i + 1] < currentDistance) i += 1
+  const segStart = distances[i]
+  const segEnd = distances[i + 1]
+  const frac = segEnd > segStart ? (currentDistance - segStart) / (segEnd - segStart) : 0
+  const t0 = points[i].instant.getTime()
+  const t1 = points[i + 1].instant.getTime()
+  return new Date(t0 + (t1 - t0) * Math.max(0, Math.min(1, frac)))
+}
+
 function strokeRoute(context, points, head, viewport, size) {
   if (points.length === 0) return
   context.beginPath()
@@ -441,22 +459,18 @@ export function drawFrame(canvas, journey, frame, text) {
   context.fillStyle = dark ? '#e8ecf4' : '#24191d'
   context.font = `700 ${34 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`
   context.fillText(text.title, card.centerX, 72 * scale, card.width - 36 * scale)
-  context.fillStyle = dark ? '#93a0b5' : '#5c4b52'
-  context.font = `${20 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`
-  context.fillText(text.periodLabel, card.centerX, 108 * scale)
 
-  // Odometer live: km & bulan nge-count di bawah judul
+  // Live count: km & bulan nge-count sesuai titik & waktu data asli (gaya = periode)
   if (frame.outroProgress <= 0 && journey.points.length >= 1) {
     const locale = text.locale || 'id-ID'
-    const t0 = journey.points[0].instant.getTime()
-    const t1 = journey.points[journey.points.length - 1].instant.getTime()
-    const instant = new Date(t0 + (t1 - t0) * Math.max(0, Math.min(1, frame.journeyProgress)))
-    const monthLabel = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(instant)
+    const instant = pointInstantAtProgress(journey, frame.journeyProgress)
+    const monthLabel = instant
+      ? new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(instant)
+      : ''
     const liveKm = Math.round(currentDistance).toLocaleString(locale)
-    const liveText = `${liveKm} km · ${monthLabel}`
-    context.fillStyle = route.main
-    context.font = `700 ${19 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`
-    context.fillText(liveText, card.centerX, 140 * scale, card.width - 32 * scale)
+    context.fillStyle = dark ? '#93a0b5' : '#5c4b52'
+    context.font = `${20 * scale}px -apple-system, BlinkMacSystemFont, sans-serif`
+    context.fillText(`${liveKm} km · ${monthLabel}`, card.centerX, 108 * scale, card.width - 32 * scale)
   }
 
   context.textAlign = 'right'
